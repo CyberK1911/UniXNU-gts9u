@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Read the real `userdata` GPT geometry off the SM-X910 and patch board.toml.
+# Read the real `userdata` GPT geometry off the SM-X916 (Galaxy Tab S9 Ultra 5G) and patch board.toml.
 #
 # The userdata image must sit exactly on the partition: a wrong first_lba writes over the
 # neighbouring partition.  Run this with the tablet in TWRP (adb root available) or on a rooted

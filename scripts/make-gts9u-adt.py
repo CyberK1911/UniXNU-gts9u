@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Generate the minimal gts9uwifi hardware Apple-format DT for the first boot.
+"""Generate the minimal gts9u hardware Apple-format DT for the first boot.
 
 The tree mirrors the proven QEMU entry fixture structure (same required
 nodes and properties the source XNU boot converged on) with real pinned
-gts9uwifi SM8550 values taken from the compiled board DT:
+gts9u SM8550 values taken from the compiled board DT:
 
   - GICv3 distributor 0x17100000/0x10000, redistributor 0x17180000/0x200000
     (arm-io child offsets under an APSS range at 0x17000000), stride 0x40000
@@ -71,7 +71,7 @@ def empty_nvram_proxy():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path,
-                        default=ROOT / 'build/gts9uwifi/boot/kernel.macho.adt')
+                        default=ROOT / 'build/gts9u/boot/kernel.macho.adt')
     parser.add_argument('--dram-size', type=lambda value: int(value, 0), required=True,
                         help='Actual observed DRAM size, e.g. 0x230000000')
     parser.add_argument('--owned-memory-size', type=lambda value: int(value, 0), default=None,
@@ -83,7 +83,7 @@ def main():
     parser.add_argument('--chip-id', type=lambda value: int(value, 16), default=None)
     parser.add_argument('--ipad-identity', action='store_true',
                         help='/product and /buttons describe an iPad-class device without a Home button (MobileGestalt reads these from the tree); '
-                             'values follow the unchanged iPad7,1 tree, the panel geometry and button set are gts9uwifi\'s')
+                             'values follow the unchanged iPad7,1 tree, the panel geometry and button set are gts9u\'s')
     parser.add_argument('--cpu-regs', default='0',
                         help='Comma-separated CPU MPIDR affinity values (the /cpus reg of each core); the first is the running boot CPU. '
                              'SM8550 numbers its cores 0x000..0x700 in Affinity1 (sm8550.dtsi). More than one adds /psci')
@@ -93,7 +93,7 @@ def main():
     parser.add_argument('--data-ramdisk', action='store_true',
                         help='/chosen/memory-map RAMDisk placeholder; the loader fills in the real range for a scratch Data seed')
     parser.add_argument('--persistent-data', action='store_true',
-                        help='The Data disk keeps its writes across boots (gts9uwifi-data-persist): no ephemeral-storage, so first-boot data migration runs')
+                        help='The Data disk keeps its writes across boots (gts9u-data-persist): no ephemeral-storage, so first-boot data migration runs')
     parser.add_argument('--trust-cache', action='store_true', help='Zeroed TrustCache sidecar handoff placeholder')
     parser.add_argument('--gpu-addon', action='store_true', help='Zeroed GpuAddon sidecar handoff placeholder (the loader fills in kernel.macho.gpuaddon)')
     parser.add_argument('--text-fixup', action='append', default=[],
@@ -123,10 +123,10 @@ def main():
     tree = node('device-tree', [
         # hw.product/hw.machine/hw.target come from the root 'model'/'target-type' (IODTPlatformExpert);
         # libMobileGestalt prefix-matches hw.product against iPhone/iPod/iPad, so the iPad identity needs both here.
-        ('model', b'iPad7,1\0' if args.ipad_identity else b'gts9uwifi-first-boot\0'),
+        ('model', b'iPad7,1\0' if args.ipad_identity else b'gts9u-first-boot\0'),
         *([('target-type', b'J120\0')] if args.ipad_identity else []),
-        # Root compatible strings of the compiled board DT (xiaomi,gts9uwifi / qcom,sm8550).
-        ('compatible', b'xiaomi,gts9uwifi\0qcom,sm8550\0'),
+        # Root compatible strings of the compiled board DT (samsung,gts9u / qcom,sm8550).
+        ('compatible', b'samsung,gts9u\0qcom,sm8550\0'),
         ('#address-cells', struct.pack('<I', 2)),
         ('#size-cells', struct.pack('<I', 2)),
     ], [
@@ -181,11 +181,11 @@ def main():
         # The original AppleImage4 panics without a product node. Name and model are the
         # board DT's own strings.
         *( [node('buttons', [('compatible', b'buttons\0'), ('device_type', b'buttons\0'),
-                             # No 'menu' entry: gts9uwifi has no Home button. 2 = the non-mechanical answer BSPlatform passes through.
+                             # No 'menu' entry: gts9u has no Home button. 2 = the non-mechanical answer BSPlatform passes through.
                              ('button-names', b'hold\0voldown\0volup\0'),
                              ('home-button-type', struct.pack('<I', 2))])] if args.ipad_identity else [] ),
         node('product', [('product-name', b'iPad Pro (12.9-inch) (2nd generation)\0' if args.ipad_identity else b'Xiaomi Pad 6S Pro 12.4\0'),
-                         ('model', b'xiaomi,gts9uwifi\0'),
+                         ('model', b'samsung,gts9u\0'),
                          *( [('product-description', b'iPad Pro (12.9-inch) (2nd generation)\0'),
                              ('artwork-device-idiom', b'pad\0'),
                              ('artwork-device-subtype', struct.pack('<I', 2732)),
@@ -209,7 +209,7 @@ def main():
     ])
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(tree)
-    print(f'gts9uwifi ADT: {len(tree)} bytes, dram {args.dram_size:#x}, timebase {TIMEBASE}')
+    print(f'gts9u ADT: {len(tree)} bytes, dram {args.dram_size:#x}, timebase {TIMEBASE}')
 
 
 if __name__ == '__main__':

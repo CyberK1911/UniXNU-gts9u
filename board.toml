@@ -1,9 +1,9 @@
 # Board description of the Xiaomi Pad 6S Pro (sheng, SM8550), read by the unixnu build driver.
 
 [board]
-name = "gts9uwifi"
+name = "gts9u"
 soc = "SM8550"
-description = "Samsung Galaxy Tab S9 Ultra (Wi-Fi)"
+description = "Samsung Galaxy Tab S9 Ultra 5G"
 kit = "sheng"                      # the package/ of this repository appears as kits/sheng in the build tree
 
 # The target OS image: the unchanged iPad7,1 iPadOS 17.7.11 restore image. Give --ipsw PATH to use a local file; without
@@ -34,7 +34,7 @@ windows = [
 ]
 
 [kernel]
-defconfig = "gts9uwifi_defconfig"
+defconfig = "gts9u_defconfig"
 # Archive builders of the kernel step, in order. Each is a script of the build tree with its arguments. The VerifiedRoot
 # and VirtIO verified bundles are not built here; they need the volume policies of the target image.
 archives = [
@@ -98,10 +98,10 @@ roots = [
 ]
 
 [firmware]
-config = "gts9uwifi"                   # Resources/Configs/sheng.toml in the Mu-Silicium checkout (--uefi)
-dsc = "Platforms/Samsung/gts9uwifiPkg/gts9uwifi.dsc"
-fd = "Build/gts9uwifiPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
-preflight = ["scripts/check-gts9uwifi.py"]
+config = "gts9u"                   # Resources/Configs/sheng.toml in the Mu-Silicium checkout (--uefi)
+dsc = "Platforms/Samsung/gts9uPkg/gts9u.dsc"
+fd = "Build/gts9uPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
+preflight = ["scripts/check-gts9u.py"]
 submodules = ["Common/Mu", "Common/Mu_OEM_Sample", "Silicium-ACPI", "Silicon/Silicium/OpensslPkg/Library/OpensslLib/openssl"]
 patches = ["Resources/MuPatches/Gic-Spurious.patch"]
 packages = [
@@ -121,15 +121,15 @@ packages = [
 
 [firmware.defines]
 ENABLE_SECUREBOOT = "1"
-DEVICE_MODEL = "gts9uwifi"
+DEVICE_MODEL = "gts9u"
 MEMORY_PROTECTION = "TRUE"
 SHIP_MODE = "FALSE"
-BUILDID_STRING = "gts9uwifi-research"
+BUILDID_STRING = "gts9u-research"
 
 # The ramdisk of the boot image: a FAT volume with the UniXNU config, the kernel, its device tree and
 # the optional trust cache and Data seed. The loader (DarwinBoot) is part of the firmware volume.
 [payload]
-volume = "GTS9UWIFIESP"
+volume = "GTS9UESP"
 size_mib = 192
 loader = "firmware"
 title = "Boot"
@@ -207,7 +207,7 @@ text_fixups = [
 ]
 
 [payload.adt]
-tool = "scripts/make-gts9uwifi-adt.py"
+tool = "scripts/make-gts9u-adt.py"
 chip_id = "207"
 owned_memory_size = "0x130000000"
 root_match_volume_uuid = "04769D26-2CA0-4825-B443-E2E5F88300F2"
