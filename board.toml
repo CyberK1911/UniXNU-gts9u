@@ -25,8 +25,8 @@ fetch = ["KernelCache", "DeviceTree", "StaticTrustCache", "Cryptex1,SystemTrustC
 # The raw image for the userdata partition: the OS and SystemOS disk images of the IPSW behind a manifest.
 # first_lba and last_lba are the GPT entry "userdata" of LUN 0, read from the tablet.
 [userdata]
-first_lba = 0x2f3840
-last_lba = 0x3d0abfa
+first_lba = 0x4b9600
+last_lba = 0x125bfff
 lba_bytes = 4096
 windows = [
   { name = "OS", component = "OS" },
