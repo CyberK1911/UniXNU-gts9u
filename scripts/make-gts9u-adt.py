@@ -99,8 +99,10 @@ def main():
     parser.add_argument('--text-fixup', action='append', default=[],
                         help='/chosen/text-fixups entry <file name>,<file offset>,<original>,<replacement> for the kernel\'s signed-text fixups')
     args = parser.parse_args()
-    if (args.unique_chip_id is None) != (args.chip_id is None):
-        parser.error('--unique-chip-id and --chip-id must be supplied together')
+    if args.chip_id is not None and args.unique_chip_id is None:
+        args.unique_chip_id = 0x53414d53554e4739
+    elif args.unique_chip_id is not None and args.chip_id is None:
+        args.chip_id = 0x207
     if args.unique_chip_id is not None and not (0 < args.unique_chip_id < 1 << 64 and 0 < args.chip_id < 1 << 32):
         parser.error('--unique-chip-id must fit 8 bytes and --chip-id 4 bytes, both nonzero')
     if args.owned_memory_size is not None and (

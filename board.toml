@@ -215,7 +215,7 @@ cpu_regs = "0,0x100,0x200,0x300,0x400,0x500,0x600,0x700"
 packed_data_ramdisk = true
 persistent_data = true               # sheng-data-persist keeps Data writes, so Data is not ephemeral storage
 ipad_identity = true
-unique_chip_id = "required"          # the platform seed is not stored in any repository
+unique_chip_id = "0x53414d53554e4739"          # the platform seed is not stored in any repository
 
 # Image parameters come from the Mu-Silicium device config; [bootimg.image] would override them.
 
