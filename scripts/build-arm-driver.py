@@ -25,7 +25,21 @@ if args.negative_verified_block and not args.verified_root:
 component = args.component
 recipe = ROOT / 'build/xnu/ios-obj/DEVELOPMENT_ARM64_BCM2837/iokit/DEVELOPMENT/IOPlatformExpert.cpo.json'
 record = json.loads(recipe.read_text().strip().rstrip(','))
-source = ROOT / 'drivers' / ('NativeMobileDisplay' if component in ('NativeLegacyDisplay','NativeGOPPresenter') else 'NativeMetal' if component in ('NativeOfflineGPU','NativeOfflineAccelerator','NativeIOGPUProviderProbe') else component) / {'NativeAdreno':'NativeAdrenoService.cpp'}.get(component, component + '.cpp')
+driver_dir = ROOT / 'drivers' / ('NativeMobileDisplay' if component in ('NativeLegacyDisplay','NativeGOPPresenter') else 'NativeMetal' if component in ('NativeOfflineGPU','NativeOfflineAccelerator','NativeIOGPUProviderProbe') else component)
+filename = {'NativeAdreno':'NativeAdrenoService.cpp'}.get(component, component + '.cpp')
+source = driver_dir / filename
+if not source.is_file():
+    aliases = {
+        'NativeAES': [ROOT / 'drivers/SoftwareAES/NativeAES.cpp', ROOT / 'drivers/NativeAES/NativeAES.cpp'],
+        'NativeUfs': [ROOT / 'drivers/NativeUfs/NativeUfs.cpp', ROOT / 'drivers/ShengUfs/NativeUfs.cpp'],
+        'NativeVirtioBlock': [ROOT / 'drivers/VirtioMmioBlock/NativeVirtioBlock.cpp', ROOT / 'drivers/NativeVirtioBlock/NativeVirtioBlock.cpp'],
+        'NativeRamBlock': [ROOT / 'drivers/RamBlock/NativeRamBlock.cpp', ROOT / 'drivers/NativeRamBlock/NativeRamBlock.cpp'],
+        'NativeAdreno': [ROOT / 'drivers/Adreno740/NativeAdrenoService.cpp', ROOT / 'drivers/NativeAdreno/NativeAdrenoService.cpp'],
+    }
+    for cand in aliases.get(component, []):
+        if cand.is_file():
+            source = cand
+            break
 out = ROOT / 'build' / {'ArmVirtPlatform': 'armvirt-platform', 'ArmDTPlatform': 'armdt-platform', 'ArmCpu': 'armcpu', 'NativeAES': 'software-aes',
                         'NativeVirtioBlock': 'native-virtio-block', 'NativeRamBlock': 'native-ram-block',
                         'NativeMobileDisplay': 'native-mobile-display', 'NativeVirtioConsole': 'native-virtio-console',
@@ -112,4 +126,28 @@ if component == 'NativeAES':
     import shutil
     shutil.copy2(destination, alt / 'NativeAES.o')
     shutil.copy2(archive, alt / 'libNativeAES.a')
+elif component == 'NativeUfs':
+    alt = ROOT / 'build/sheng-ufs'
+    alt.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copy2(destination, alt / 'NativeUfs.o')
+    shutil.copy2(archive, alt / 'libShengUfs.a')
+elif component == 'NativeAdreno':
+    alt = ROOT / 'build/adreno740'
+    alt.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copy2(destination, alt / 'NativeAdrenoService.o')
+    shutil.copy2(archive, alt / 'libAdreno740.a')
+elif component == 'NativeVirtioBlock':
+    alt = ROOT / 'build/virtio-mmio-block'
+    alt.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copy2(destination, alt / 'NativeVirtioBlock.o')
+    shutil.copy2(archive, alt / 'libVirtioMmioBlock.a')
+elif component == 'NativeRamBlock':
+    alt = ROOT / 'build/ram-block'
+    alt.mkdir(parents=True, exist_ok=True)
+    import shutil
+    shutil.copy2(destination, alt / 'NativeRamBlock.o')
+    shutil.copy2(archive, alt / 'libRamBlock.a')
 print(f'{component}: -Werror build and actual ARM64/iOS 17 object audit passed')

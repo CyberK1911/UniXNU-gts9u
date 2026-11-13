@@ -15,7 +15,10 @@ sources += [ROOT / 'kits/AdrenoFirmware' / name for name in
 sources += sorted(p for p in (ROOT / 'kits/ArmSmmu4K').glob('ArmSmmu4K*.c'))
 sources += [ROOT / 'kits/AdrenoPM4/AdrenoPM4.c']
 objects = []
-sources += sorted(p for p in (ROOT / 'drivers/NativeAdreno').glob('NativeAdreno*.cpp')
+adreno_dir = ROOT / 'drivers/NativeAdreno'
+if not adreno_dir.is_dir() and (ROOT / 'drivers/Adreno740').is_dir():
+    adreno_dir = ROOT / 'drivers/Adreno740'
+sources += sorted(p for p in adreno_dir.glob('NativeAdreno*.cpp')
                   if p.name not in ('NativeAdrenoClient.cpp', 'NativeAdrenoService.cpp', 'NativeAdrenoAccelerator.cpp'))
 # NativeAdrenoAccelerator.cpp is built staged by build-native-adreno-accelerator.py (its initializer must not run at boot).
 # NativeAdrenoService.cpp is the archive's NativeAdreno.o from build-arm-driver.py; start from that object only.
@@ -39,7 +42,7 @@ for source in sources:
         i += 1
     command += ['-I', str(ROOT / 'kits/sheng'), '-I', str(ROOT / 'kits/AdrenoFirmware'),
                 '-I', str(ROOT / 'build/sheng-gmu'), '-I', str(ROOT / 'kits/AdrenoPM4'), '-I', str(ROOT / 'kits/ArmSmmu4K'), '-I', str(ROOT / '.cache/xnu-work/osfmk'),
-                '-I', str(ROOT / 'drivers/NativeAdreno'), '-Wall', '-Wextra', '-Werror',
+                '-I', str(adreno_dir), '-Wall', '-Wextra', '-Werror',
                 '-Wno-unused-parameter', '-Wno-incompatible-sysroot', '-Wno-c99-designator',
                 '-Wno-reorder-init-list', '-Wno-deprecated-enum-enum-conversion',
                 '-Wno-unnecessary-virtual-specifier']
