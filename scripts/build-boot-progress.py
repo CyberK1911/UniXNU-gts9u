@@ -31,6 +31,7 @@ while i < len(args):
     i += 1
 command += ['-DXNU_BOOT_PROGRESS=1', '-mgeneral-regs-only', '-Wall', '-Wextra', '-Werror',
             '-I', str(ROOT / '.cache/xnu-work/osfmk'),
+            '-I', str(source.parent),
             '-Wno-missing-include-dirs']
 subprocess.run(command, cwd=record['directory'], check=True, timeout=90)
 (OUT / 'compile-command.json').write_text(json.dumps(command,indent=2)+'\n')
@@ -56,7 +57,7 @@ while j < len(policy_args):
     elif not arg.startswith('-W'):
         policy_command.append(arg)
     j += 1
-policy_command += ['-mgeneral-regs-only', '-Wall', '-Wextra', '-Werror']
+policy_command += ['-mgeneral-regs-only', '-Wall', '-Wextra', '-Werror', '-I', str(source.parent)]
 subprocess.run(policy_command, cwd=policy_record['directory'], check=True, timeout=90)
 # The diagnostic file export (BootLog.c's sheng-diag-export) reads files through the VFS: the same BSD-side flags.
 diag_source = ROOT / 'kits/sheng/BootDiagExport.c'
