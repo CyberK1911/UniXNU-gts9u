@@ -35,6 +35,11 @@ if not source.is_file():
         'NativeVirtioBlock': [ROOT / 'drivers/VirtioMmioBlock/NativeVirtioBlock.cpp', ROOT / 'drivers/NativeVirtioBlock/NativeVirtioBlock.cpp'],
         'NativeRamBlock': [ROOT / 'drivers/RamBlock/NativeRamBlock.cpp', ROOT / 'drivers/NativeRamBlock/NativeRamBlock.cpp'],
         'NativeAdreno': [ROOT / 'drivers/Adreno740/NativeAdrenoService.cpp', ROOT / 'drivers/NativeAdreno/NativeAdrenoService.cpp'],
+        'NativeLegacyDisplay': [ROOT / 'drivers/GopFramebuffer/NativeLegacyDisplay.cpp', ROOT / 'drivers/NativeMobileDisplay/NativeLegacyDisplay.cpp'],
+        'NativeGOPPresenter': [ROOT / 'drivers/GopFramebuffer/NativeGOPPresenter.cpp', ROOT / 'drivers/NativeMobileDisplay/NativeGOPPresenter.cpp'],
+        'NativeMobileDisplay': [ROOT / 'drivers/GopFramebuffer/NativeMobileDisplay.cpp', ROOT / 'drivers/NativeMobileDisplay/NativeMobileDisplay.cpp'],
+        'NativeKeyStoreEvents': [ROOT / 'drivers/AppleKeyStoreState/NativeKeyStoreEvents.cpp', ROOT / 'drivers/NativeKeyStoreEvents/NativeKeyStoreEvents.cpp'],
+        'NativeHidInput': [ROOT / 'drivers/NativeHidInput/NativeHidInput.cpp'],
     }
     for cand in aliases.get(component, []):
         if cand.is_file():

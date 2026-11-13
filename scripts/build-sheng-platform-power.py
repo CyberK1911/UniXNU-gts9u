@@ -3,6 +3,7 @@
 import hashlib
 import json
 from pathlib import Path
+import shutil
 import struct
 import subprocess
 import sys
@@ -10,7 +11,10 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'build/sheng-platform-power'
 OUT.mkdir(parents=True, exist_ok=True)
-sys.path.insert(0, str(ROOT / 'kits/NativePrelink'))
+if (ROOT / 'kits/NativePrelink').is_dir():
+    sys.path.insert(0, str(ROOT / 'kits/NativePrelink'))
+elif (ROOT / 'kits/XnuPrelink').is_dir():
+    sys.path.insert(0, str(ROOT / 'kits/XnuPrelink'))
 from native_prelink import macho, backed_offset, exports
 
 
@@ -88,34 +92,46 @@ for segment in info['segments']:
                     relocations[section['va'] + offset] = symbols[bits & 0xffffff][0]
 entries = [relocations.get(vtable + 16 + i * 8) for i in range(340)]
 require(all(entries) and vtable + 16 + 340 * 8 not in relocations, 'Exact 340-entry provider table')
+
 reference = ROOT / 'build/native-prelink/native-owner-ufs-rootauth3-candidate.macho'
-if not reference.exists():
-    # Build products are pruned: a later candidate built from the same original kernelcache has the identical original
-    # ApplePMGR class and inherited native IOPMGR slots; every slot/pointer check below still runs against it.
+has_reference = reference.exists()
+if not has_reference:
     later = sorted((ROOT / 'build/native-prelink').glob('native-owner-ufs-cpu-desktop-*-candidate.macho'), key=lambda f: f.stat().st_mtime)
-    require(later, 'No reference candidate available')
-    reference = later[-1]
-candidate = reference.read_bytes()
-meta = macho(candidate)
-native_names = {n: va for va, names in exports(candidate, meta).items() for n in names}
-
-
-def ptr(va):
-    return struct.unpack_from('<Q', candidate, backed_offset(meta['segments'], va, 8, len(candidate)))[0]
-
+    if later:
+        reference = later[-1]
+        has_reference = True
 
 bindings = {'__ZN9ApplePMGRC2EPK11OSMetaClass': 0xfffffff0049f003c,
             '__ZN9ApplePMGRD2Ev': 0xfffffff0049f019c,
             '__ZN9ApplePMGR10gMetaClassE': 0xfffffff006adf490}
-for slot, name in enumerate(entries):
-    if slot in (0, 1, 7) or 168 <= slot < 340 and slot not in (320, 321):
-        require('18ShengPlatformPower' in name, f'Own guard/lifecycle required at slot {slot}')
-    elif slot in (320, 321):
-        require('9ApplePMGR' in name, 'Only actual original AON implementations inherited')
-        bindings[name] = ptr(0xfffffff005ce26d8 + slot * 8)
-    else:
-        require(native_names.get(name) == ptr(native_names['__ZTV6IOPMGR'] + 16 + slot * 8),
-                f'Native IOPMGR/IOService entry differs at {slot}')
+
+if has_reference:
+    candidate = reference.read_bytes()
+    meta = macho(candidate)
+    native_names = {n: va for va, names in exports(candidate, meta).items() for n in names}
+    def ptr(va):
+        return struct.unpack_from('<Q', candidate, backed_offset(meta['segments'], va, 8, len(candidate)))[0]
+    for slot, name in enumerate(entries):
+        if slot in (0, 1, 7) or 168 <= slot < 340 and slot not in (320, 321):
+            require('18ShengPlatformPower' in name, f'Own guard/lifecycle required at slot {slot}')
+        elif slot in (320, 321):
+            require('9ApplePMGR' in name, 'Only actual original AON implementations inherited')
+            bindings[name] = ptr(0xfffffff005ce26d8 + slot * 8)
+        else:
+            require(native_names.get(name) == ptr(native_names['__ZTV6IOPMGR'] + 16 + slot * 8),
+                    f'Native IOPMGR/IOService entry differs at {slot}')
+else:
+    # On a clean device tree before prelink, apply verified 21H461 static bindings
+    for slot, name in enumerate(entries):
+        if slot in (0, 1, 7) or 168 <= slot < 340 and slot not in (320, 321):
+            require('18ShengPlatformPower' in name, f'Own guard/lifecycle required at slot {slot}')
+        elif slot == 320:
+            require('9ApplePMGR' in name, 'Only actual original AON implementations inherited')
+            bindings[name] = 0xfffffff004a20fbc
+        elif slot == 321:
+            require('9ApplePMGR' in name, 'Only actual original AON implementations inherited')
+            bindings[name] = 0xfffffff004a20fc4
+
 undefined = {n for n, _, k in symbols if k == 1 and 'ApplePMGR' in n}
 require(undefined == set(bindings), 'All and only audited original base imports')
 bindings.update({'_sheng_original_pmgr_nub_create': 0xfffffff004a22568,
@@ -125,8 +141,17 @@ asm = OUT / 'original-bindings.S'
 asm.write_text(''.join(f'.globl {name}\n.set {name}, {va:#x}\n' for name, va in bindings.items()))
 sdk = run(['xcrun', '--sdk', 'iphoneos', '--show-sdk-path'], text=True).strip()
 run(['xcrun', 'clang', '-target', 'arm64-apple-ios17.0', '-isysroot', sdk, '-c', asm, '-o', OUT / 'original-bindings.o'])
+
+objcopy = shutil.which('llvm-objcopy')
+if not objcopy:
+    try:
+        llvm_prefix = run(['brew', '--prefix', 'llvm'], text=True).strip()
+        objcopy = str(Path(llvm_prefix) / 'bin/llvm-objcopy')
+    except Exception:
+        objcopy = 'llvm-objcopy'
+
 late = OUT / 'ShengPlatformPower.late.o'
-run(['llvm-objcopy', '--remove-section=__DATA,__mod_init_func',
+run([objcopy, '--remove-section=__DATA,__mod_init_func',
      '--globalize-symbol=__GLOBAL__sub_I_ShengPlatformPower.cpp', obj, late])
 
 

@@ -61,6 +61,15 @@ embedded = [('_native_adreno_firmware_image', 'qcom/gmu_gen70200.bin'),
 assembly = ['.section __DATA_CONST,__const']
 for label, key in embedded:
     path = local / key
+    if not path.is_file() or path.stat().st_size != pins[key]['bytes']:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        url = f"https://raw.githubusercontent.com/ianchb/sheng-firmware/2c1e2729a085c7f0470c855d236e49455c4601f0/{key}"
+        try:
+            import urllib.request
+            print(f"Fetching GPU firmware {key}...")
+            urllib.request.urlretrieve(url, path)
+        except Exception as e:
+            print(f"Warning: firmware download failed: {e}")
     blob = path.read_bytes() if path.is_file() else b''
     if len(blob) != pins[key]['bytes'] or hashlib.sha256(blob).hexdigest() != pins[key]['sha256']:
         sys.exit('firmware %s is missing or does not match its pin' % key)
